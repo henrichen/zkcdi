@@ -14,103 +14,210 @@ Copyright (C) 2010 Potix Corporation. All Rights Reserved.
 package org.zkoss.cdi.util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import org.zkoss.cdi.annotation.impl.EventBinding;
 import org.zkoss.cdi.event.Events;
-import org.zkoss.lang.Classes;
+import org.zkoss.util.CollectionsX;
+import org.zkoss.util.logging.Log;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
-import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.ForwardEvent;
 import org.zkoss.zk.ui.util.Composer;
 
 
 /**
+ * <p>An abstract comopser that you can extend and use JEE6 platform CDI features such as dependancy injection, 
+ * custom context representing ZK scopes and use CDI notification model to write event handling methods. 
+ * Any subclass of this class can be applied to ZK component using "apply" attribute providing EL expression.
+ * Using CDI Inject annotation along with ZK custom ComponentId annotation you can inject child components 
+ * of parent component to which subclass is applied. You can also use CDI defined Observes annotation for 
+ * method parameters along with ZK custom Events annotation to write your event handler methods for 
+ * specific events such as MouseEvent or SelectEvent.</p>
+ * 
+ * <p>Following is an example of subclass that extends from GenericComposer and uses above mentioned CDI features.
+ * </p>
+ * <pre><code>
+ * MyComposer.java
+ * 
+ * @Named
+ * public void MyComposer extends GenericComposer implements Serializable {
+ * 		@Inject @ComponentId("myLabel") Label myLabel;
+ * 		@Inject @ComponentId("myTextbox") Textbox myTextbox;
+ * 		@Inject @ComponentId("myButton") Button myButton;
+ * 
+ * 		public void sayHello(@Observes @Events("myButton.onClick") MouseEvent evt) {
+ * 			myLabel.setValue("You just entered: "+ myTextbox.getValue());
+ * 		}
+ * }
+ * 
+ * hello.zul
+ * 
+ * &lt;window id="mywin" apply="${myComposer}">
+ *     &lt;textbox id="myTextbox"/>
+ *     &lt;textbox id="myButton"/>
+ *     &lt;label id="myLabel"/>
+ * &lt;/window>
+ * </code></pre>
  * @author ashish
- *
+ * @since 5.0.1
  */
-public class GenericComposer implements Composer, EventListener {
+abstract public class GenericComposer implements Composer, EventListener {
 
-	/**
-	 * 
-	 */
+	private static final Log log = Log.lookup(GenericComposer.class);
+
+	/** javax.enterprise.event.Event instance used to publish ZK Event(s)*/
 	@Inject	private javax.enterprise.event.Event<Event> zkevent;
+	
+	/** map of individual componet events and associated Events annotation values */
+	private Map<String,List<String>> eventsMap = null;
 
 	/**
-	 * 
-	 * @param comp
-	 * @param eventsComposer
+	 * Auto inject ZK compoents referenced as composer fields. Setup composer as ZK event publisher.
+	 * Forward child component events to composer.
+	 * @param comp parent Component
 	 * @throws Exception
 	 */
 	public void doAfterCompose(Component comp) throws Exception {
-		// set context component for later use during the component injection using producer methods
-		ZkCDIIntegrationContext.setContextComponent(comp);
-		ZkCDIIntegrationContext.setSelfContextComponent(comp);
-		bindComponents(comp, this);
-		bindEventHandlers(comp, this);
+		try {
+			// to setup context component i.e. component to which this composer is applied
+			ZkCDIIntegrationContext.setContextComponent(comp);
+			ZkCDIIntegrationContext.setSelfContextComponent(comp);
+			// to trigger zk component injection
+			accessFields();
+
+			// to setup this composer as CDI event publisher
+			setupControllerAsEventPublisher(comp, this);
+			
+			// forward all child events to this composer
+			addForwards(comp, this);
+		} finally {
+			ZkCDIIntegrationContext.clearContextComponent();
+		}
 	}
 
 	/**
-	 * 
+	 * accesses individual fields of composer instance to trigger component injection
+	 * @throws IllegalAccessException
+	 */
+	private void accessFields() throws IllegalAccessException {
+		Class cls = this.getClass();
+		Field[] flds = cls.getDeclaredFields();
+		StringBuffer sb = new StringBuffer();
+		for (int j = 0; j < flds.length; ++j) {
+			Field f = flds[j];
+			f.setAccessible(true);
+			Object o = f.get(this);
+			sb.append(o == null ? "" : o.toString());
+		}
+	}
+
+	/**
+	 * sets this composer as event listner to all child events specified 
+	 * in Events annotation
 	 * @param comp
 	 * @param controller
 	 */
-	private void bindComponents(Component comp, Object controller) {
+	private void setupControllerAsEventPublisher(Component comp, Object controller) {
 		final Method[] metds = getController().getClass().getMethods();
+		eventsMap = new HashMap<String, List<String>>();
 		for (int i = 0; i < metds.length; i++) {
 			final Method md = metds[i];
 			String mdname = md.getName();
 			if (mdname.equals("onEvent")) {
 				comp.addEventListener(mdname, this);
 			} else {
-				Annotation[][] anex = md.getParameterAnnotations();
-				for (int j = 0; j < anex.length; j++) {
-					Annotation[] annotations = anex[j];
-					if (annotations != null && annotations.length > 1) {
-						Annotation a = annotations[1];
-						if (a instanceof Events) {
-							String annotationValue = ((Events) a).value();
-							String srccompid = annotationValue.substring(0,
-									annotationValue.indexOf('.'));
-							String srcevt = annotationValue.substring(
-									annotationValue.indexOf('.') + 1,
-									annotationValue.length());
-							comp.addEventListener(srcevt + "." + srccompid,
-									this);
-						}
-					}
-				}
+				String annotationValue = getEventsParameterAnnotation(md);
+				processEventsAnnotation(comp, annotationValue);						
 			}
 		}
 	}
 
 	/**
-	 * 
+	 * adds this composer as event listner for each event specified in Events annotation value
+	 * @param comp
+	 * @param annotationValue
+	 */
+	private void processEventsAnnotation(Component comp, String annotationValue) {
+		if (annotationValue == null) {
+			return;
+		}
+		List<String> annotationValueTokens = (List<String>) CollectionsX.parse(new ArrayList<String>(), annotationValue, ',');
+		for (String annotationValueToken : annotationValueTokens) {
+			String srccompid = annotationValueToken.substring(0, annotationValueToken.indexOf('.'));
+			String srcevt  = annotationValueToken.substring(annotationValueToken.indexOf('.') + 1, annotationValueToken.length());
+			String eventName = srcevt + "." + srccompid;
+			List<String> annotationSelector = eventsMap.get(eventName); 
+			if ( annotationSelector == null ) {
+				annotationSelector = new ArrayList<String>();
+				annotationSelector.add(annotationValue);
+				eventsMap.put(eventName, annotationSelector);
+			} else {
+				annotationSelector.add(annotationValue);
+				eventsMap.put(eventName, annotationSelector);
+			}
+			comp.addEventListener(eventName, this);
+		}
+	}
+
+	/**
+	 * returns Events annotation value if present on any method parameter
+	 * @param md
+	 * @return annotationValue if any parameter is annotated with Events annotation returns its value or else returns null
+	 */
+	private String getEventsParameterAnnotation(Method md) {
+		Annotation[][] anex = md.getParameterAnnotations();
+		for (int j = 0; j < anex.length; j++) {
+			Annotation[] annotations = anex[j];
+			if (annotations != null && annotations.length > 1) {
+				Annotation a = annotations[1];
+				if (a instanceof Events) {
+					return ((Events) a).value();
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * for each individual event fires an CDI event 
+	 * @param evt 
 	 */
 	@SuppressWarnings("serial")
 	@Override
 	public void onEvent(Event evt) throws Exception {
 		final Event evt1 = evt;
-		if (evt != null && evt.getName() != null) {
-
-			ZkCDIIntegrationContext.setContextComponent(evt.getTarget());
-			ZkCDIIntegrationContext.setSelfContextComponent(evt.getTarget());
-
-			zkevent.select(new EventBinding() {
-				public String value() {
-					String annotationValue = evt1.getName();
-					String srccompid = annotationValue.substring(0,
-							annotationValue.indexOf('.'));
-					String srcevt = annotationValue.substring(annotationValue
-							.indexOf('.') + 1, annotationValue.length());
-					return srcevt + "." + srccompid;
+		Component originalSelf = null;
+		try {
+			if (evt != null && evt.getName() != null) {
+				originalSelf = ZkCDIIntegrationContext.getSelfContextComponent(); 
+				ZkCDIIntegrationContext.setSelfContextComponent(evt.getTarget());
+				Event evtOrig = org.zkoss.zk.ui.event.Events.getRealOrigin((ForwardEvent) evt); 
+				
+				final List<String> annotationSelectors = eventsMap.get(evt
+						.getName());
+				for (Iterator iterator = annotationSelectors.iterator(); iterator
+						.hasNext();) {
+					final String annotationSelector = (String) iterator.next();
+					zkevent.select(new EventBinding() {
+						public String value() {
+							return annotationSelector;
+						}
+					}).fire(evtOrig);
 				}
-			}).fire(evt);
+			}
+		} finally {
+			ZkCDIIntegrationContext.setSelfContextComponent(originalSelf);
 		}
 	}
 	
@@ -118,33 +225,13 @@ public class GenericComposer implements Composer, EventListener {
 		return this;
 	}
 
-	/** Shortcut to call Messagebox.show(String).
-	 * @since 3.0.7 
-	 */
-	private static Method _alert;
-	protected void alert(String m) {
-		//zk.jar cannot depends on zul.jar; thus we call Messagebox.show() via
-		//reflection. kind of weird :-).
-		try {
-			if (_alert == null) {
-				final Class mboxcls = Classes.forNameByThread("org.zkoss.zul.Messagebox");
-				_alert = mboxcls.getMethod("show", new Class[] {String.class});
-			}
-			_alert.invoke(null, new Object[] {m});
-		} catch (InvocationTargetException e) {
-			throw UiException.Aide.wrap(e);
-		} catch (Exception e) {
-			//ignore
-		}
-	}
-	
 	/**
 	 * forwards component events to controller methods annotated with Events qualifier
 	 * @param comp
 	 * @param controller
 	 */
 	@SuppressWarnings("unchecked")
-	public static void bindEventHandlers(Component comp, Object controller) {
+	public void addForwards(Component comp, Object controller) {
 		// TODO Auto-generated method stub
 		final Class cls = controller.getClass();
 		final Method[] mtds = cls.getMethods();
@@ -160,7 +247,7 @@ public class GenericComposer implements Composer, EventListener {
 					}
 				}
 			}
-		}		
+		}
 	}
 	/**
 	 * method to add forward event from child component to parent or composer component
@@ -169,25 +256,34 @@ public class GenericComposer implements Composer, EventListener {
 	 * @param comp
 	 */
 	
-	public static void addForward(Method md, Annotation a, Component comp) {
+	@SuppressWarnings("unchecked")
+	public void addForward(Method md, Annotation a, Component comp) {
 		String mdname = md.getName();
 		Component xcomp = comp;
-		String annotationValue = ((Events)a).value();
-		final String srccompid = annotationValue.substring(0, annotationValue.indexOf('.'));
-		final String srcevt  = annotationValue.substring(annotationValue.indexOf('.') + 1, annotationValue.length());
-		
-		// get component instance from bean manager
-		// try EL resolver or check any api/spi interface
-		Object srccomp = xcomp.getAttributeOrFellow(srccompid, true);
-		if (srccomp == null) {
-			Page page = xcomp.getPage();
-			if (page != null)
-				srccomp = page.getXelVariable(null, null, srccompid, true);
-		}
-		if (srccomp == null || !(srccomp instanceof Component)) {
-				System.out.println("Cannot find the associated component to forward event: "+mdname);
-		} else {
-			((Component)srccomp).addForward(srcevt, xcomp, srcevt + "." + srccompid);
+		String annotationValue = ((Events) a).value();
+		List<String> annotationValueTokens = (List<String>) CollectionsX.parse(
+				new ArrayList<String>(), annotationValue, ',');
+		for (String annotationValueToken : annotationValueTokens) {
+			String srccompid = annotationValueToken.substring(0,
+					annotationValueToken.indexOf('.'));
+			String srcevt = annotationValueToken.substring(annotationValueToken
+					.indexOf('.') + 1, annotationValueToken.length());
+
+			// TODO: get component instance from bean manager
+			// try EL resolver or check any api/spi interface
+			Object srccomp = xcomp.getAttributeOrFellow(srccompid, true);
+			if (srccomp == null) {
+				Page page = xcomp.getPage();
+				if (page != null)
+					srccomp = page.getXelVariable(null, null, srccompid, true);
+			}
+			if (srccomp == null || !(srccomp instanceof Component)) {
+				log.debug("Cannot find the associated component to forward event: "
+								+ mdname);
+			} else {
+				((Component) srccomp).addForward(srcevt, xcomp, srcevt + "."
+						+ srccompid);
+			}
 		}
 	}
 }

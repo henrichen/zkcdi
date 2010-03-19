@@ -203,18 +203,22 @@ public class ZKWeldExtension implements Extension {
 		sb.append("() {");
 		sb.append(injectedFieldType + " f = null;");
 		sb.append("Component c = ZkCDIIntegrationContext.getContextComponent();");
+//		sb.append("System.out.println(\"Current thread id = \" + Thread.currentThread().getId());");
 		sb.append("if(c == null) {");
-//		sb.append("System.out.println(\"returning dummy instance of " +
-//		injectedFieldType);
-//		sb.append("\");");
+//		sb.append("System.out.println(\"returning dummy instance of " + injectedFieldType + "\");");
 		sb.append("return new " + injectedFieldType + "();} else {");
+//		sb.append("System.out.println(\"returning component retrieved from component tree\" + c);");
+		
+		sb.append("try {");		
+		
 		sb.append("f = (" + injectedFieldType + ")c.getFellow(\""
 				+ injectedFieldName + "\");");
-		// sb.append("System.out.println(\"returning component retrieved from component tree\" + f);");
-		sb.append("}");
+//		 sb.append("System.out.println(\"returning component retrieved from component tree\" + f);");
+		
+		sb.append("}catch(ComponentNotFoundException e) {e.printStackTrace(); throw new RuntimeException(e.getMessage());}}");
+		
 		sb.append("return f;");
 		sb.append("}");
-		
 		mnew = CtNewMethod.make(sb.toString(), mainClass);
 
 		ConstPool cp = mnew.getMethodInfo().getConstPool();
