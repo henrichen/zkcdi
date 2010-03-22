@@ -38,7 +38,7 @@ import javax.inject.Qualifier;
  * 		}
  * </code></pre>
  * 
- * <p>Multiple events can also be specified by separating them using comma for eg.</p>
+ * <p>Multiple events can also be specified by separating them using comma for example</p>
  * 
  * <pre><code>
  * 		public void sayHello(@Observes @Events("myButton.onClick,myButton1.onClick") MouseEvent evt) {
