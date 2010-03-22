@@ -70,7 +70,6 @@ import org.zkoss.zk.ui.util.Composer;
  * &lt;/window>
  * </code></pre>
  * @author ashish
- * @since 5.0.1
  */
 abstract public class GenericComposer implements Composer, EventListener {
 
