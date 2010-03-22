@@ -13,12 +13,10 @@ Copyright (C) 2009 Potix Corporation. All Rights Reserved.
 package org.zkoss.cdi.weld;
 
 /**
- * The version of the ZK CDI Addon.
+ * The version of the ZK CDI Extension & Utilities.
  * @author henrichen
- * @since 5.0.0
  */
 public class Version {
-	/** Returns the version UID.
-	 */
-	public static final String UID = "5.0.1";
+	/** Returns the version UID */
+	public static final String UID = "1.0_1RC";
 }

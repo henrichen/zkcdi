@@ -15,7 +15,6 @@ package org.zkoss.cdi.inject;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -32,8 +31,9 @@ import javax.inject.Qualifier;
 @Qualifier
 @Documented
 @Retention(RUNTIME)
-@Target({TYPE, METHOD, FIELD })
+@Target({METHOD, FIELD })
 @Inherited
 public @interface ComponentId {
+	/** component id */
 	public String value();
 }

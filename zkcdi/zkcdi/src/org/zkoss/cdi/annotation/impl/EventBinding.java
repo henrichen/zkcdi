@@ -18,8 +18,10 @@ import javax.enterprise.util.AnnotationLiteral;
 import org.zkoss.cdi.event.Events;
 
 /**
+ * <p> An abstract class used while publishing ZK events using 
+ * CDI event notification mechanism
+ * </p>
  * @author ashish
- *
  */
 @SuppressWarnings("serial")
 public abstract class EventBinding extends AnnotationLiteral<Events> 
