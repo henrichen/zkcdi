@@ -26,24 +26,23 @@ import javax.enterprise.event.Observes;
 import javax.inject.Qualifier;
 
 /**
- * <p>Used as method parameter annotation along with {@link Observes}
+ * <p>Used as method parameter annotation along with {@link javax.enterprise.event.Observes @Observes}
  * The value indicates observed event in the form of target component 
  * and event name for eg. for a onClick event of a button component 
  * with id myButton Events annotation can be used in following manner 
  * </p>
- * 
- *  <pre><code>
- * 		public void sayHello(@Observes @Events("myButton.onClick") MouseEvent evt) {
- * 			...
- * 		}
+ * <pre><code>
+ *    public void sayHello({@link javax.enterprise.event.Observes @Observes} {@link org.zkoss.cdi.event.Events @Events}("myButton.onClick") MouseEvent evt) {
+ *      ...
+ *     }
  * </code></pre>
  * 
  * <p>Multiple events can also be specified by separating them using comma for example</p>
  * 
  * <pre><code>
- * 		public void sayHello(@Observes @Events("myButton.onClick,myButton1.onClick") MouseEvent evt) {
- * 			...
- * 		}
+ *     public void sayHello({@link javax.enterprise.event.Observes @Observes} {@link org.zkoss.cdi.event.Events @Events}("myButton.onClick,myButton1.onClick") MouseEvent evt) {
+ *       ...
+ *    }
  * </code></pre>
  * 
  * @author ashish

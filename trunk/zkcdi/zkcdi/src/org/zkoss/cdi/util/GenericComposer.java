@@ -50,24 +50,25 @@ import org.zkoss.zk.ui.util.Composer;
  * <pre><code>
  * MyComposer.java
  * 
- * @Named
+ * {@link javax.inject.Named @Named}
+ * {@link javax.enterprise.context.SessionScoped @SessionScoped}
  * public void MyComposer extends GenericComposer implements Serializable {
- * 		@Inject @ComponentId("myLabel") Label myLabel;
- * 		@Inject @ComponentId("myTextbox") Textbox myTextbox;
- * 		@Inject @ComponentId("myButton") Button myButton;
+ *      {@link javax.inject.Inject @Inject} {@link org.zkoss.cdi.inject.ComponentId @ComponentId}("myLabel") Label myLabel;
+ *      {@link javax.inject.Inject @Inject} {@link org.zkoss.cdi.inject.ComponentId @ComponentId}("myTextbox") Textbox myTextbox;
+ *      {@link javax.inject.Inject @Inject} {@link org.zkoss.cdi.inject.ComponentId @ComponentId}("myButton") Button myButton;
  * 
- * 		public void sayHello(@Observes @Events("myButton.onClick") MouseEvent evt) {
- * 			myLabel.setValue("You just entered: "+ myTextbox.getValue());
- * 		}
+ *      public void sayHello({@link javax.enterprise.event.Observes @Observes} {@link org.zkoss.cdi.event.Events @Events}("myButton.onClick") MouseEvent evt) {
+ *          myLabel.setValue("You just entered: "+ myTextbox.getValue());
+ *      }
  * }
  * 
  * hello.zul
  * 
- * &lt;window id="mywin" apply="${myComposer}">
- *     &lt;textbox id="myTextbox"/>
- *     &lt;textbox id="myButton"/>
- *     &lt;label id="myLabel"/>
- * &lt;/window>
+ * &lt;window id="mywin" apply="${myComposer}"&gt;
+ *     &lt;textbox id="myTextbox"/&gt;
+ *     &lt;textbox id="myButton"/&gt;
+ *     &lt;label id="myLabel"/&gt;
+ * &lt;/window&gt;
  * </code></pre>
  * @author ashish
  */
