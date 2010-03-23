@@ -106,13 +106,13 @@ if [ "$target" == "official" ] ; then
 
 	mv dist/lib/zkcdidemo.war dist/lib/zkcdidemo-all.war
 
-	cp -f zkcdidemo/war.libs.minimal zkdemo/war.libs
+	cp -f zkcdidemo/war.libs.minimal zkcdidemo/war.libs
 	./build clean zkcdidemo
 	./build zkcdidemo
 fi
 if [ "$target" == "daily" ] ; then
 	rm -rf dist/lib/zkcdidemo*.war
-	cp -f zkcdidemo/war.libs.all zkdemo/war.libs
+	cp -f zkcdidemo/war.libs.all zkcdidemo/war.libs
 	./build clean zkcdidemo
 	./build zkcdidemo
 
@@ -307,7 +307,7 @@ if [ "$target" == "official" ] || [ "$target" == "daily" ] ; then
 
 
 		cp dist/lib/zcommon.jar dist/lib/zcommons-el.jar dist/lib/zweb.jar /tmp/zkcdi/$binnm/dist/lib/
-	cp dist/lib/zk.jar dist/lib/zul.jar dist/lib/zkplus.jar /tmp/zkcdi/$binnm/dist/lib/
+	cp dist/lib/zkcdi.jar dist/lib/zk.jar dist/lib/zul.jar dist/lib/zkplus.jar /tmp/zkcdi/$binnm/dist/lib/
 	cp dist/lib/zkex.jar /tmp/zkcdi/$binnm/dist/lib/
 	chmod 644 /tmp/zkcdi/$binnm/dist/lib/*.jar
 	chmod 644 /tmp/zkcdi/$binnm/dist/lib/*/*.jar
@@ -458,7 +458,7 @@ if [ "$target" == "official" ] || [ "$target" == "daily" ] ; then
 		
 		
 		
-	cd /tmp/zk
+	cd /tmp/zkcdi
 
 
 	
@@ -535,7 +535,7 @@ if [ "$target" == "official" ] || [ "$target" == "daily" ] ; then
 		
 		#Prepare the doc
 		cd $maindir
-		$maindir/bin/javadoc "$javadocdir/ZKCDI"
+		#$maindir/bin/javadoc "$javadocdir/ZKCDI"
 	fi
 
 	rm -rf $binnm
@@ -544,12 +544,11 @@ if [ "$target" == "official" ] || [ "$target" == "daily" ] ; then
 	cd $javadocdir
 
 	echo Output ${javadocnm}.zip
-	zip -qr9 ${javadocnm}.zip ZKCDI
+	zip -qr9 ${javadocnm}.zip zkcdi
 	mv ${javadocnm}.zip /tmp/zkcdi
 
 	mkdir -p /tmp/zkcdi/$demonm/zkcdidemo/WebContent
 	mkdir -p /tmp/zkcdi/$demonm/zkcdidemo/src/org
-	mkdir -p /tmp/zkcdi/$demonm/MyApp/WebContent
 	mkdir -p /tmp/zkcdi/$demonm/doc
 
 	cd $maindir
@@ -557,7 +556,6 @@ if [ "$target" == "official" ] || [ "$target" == "daily" ] ; then
 	cp -rp zkcdidemo/src/archive/* /tmp/zkcdi/$demonm/zkcdidemo/WebContent
 	#cp -rp zkcdidemo/codegen/archive/* /tmp/zkcdi/$demonm/zkcdidemo/WebContent
 	cp -rp zkcdidemo/src/org/* /tmp/zkcdi/$demonm/zkcdidemo/src/org
-	cp -rp MyApp/src/archive/* /tmp/zkcdi/$demonm/MyApp/WebContent
 
 
 	cp dist/lib/zkcdidemo.war /tmp/zkcdi/$demonm/zkcdidemo-min.war
