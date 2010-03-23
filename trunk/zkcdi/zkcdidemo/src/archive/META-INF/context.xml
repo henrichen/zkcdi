@@ -1,0 +1,19 @@
+<Context>
+	<Manager pathname="" /> <!-- disables storage of sessions across restarts -->
+	<Resource name="BeanManager" auth="Container"
+		type="javax.enterprise.inject.spi.BeanManager" factory="org.jboss.weld.resources.ManagerObjectFactory" />
+<Resource driverClassName="com.mysql.jdbc.Driver" 
+maxActive="4" maxIdle="2" maxWait="5000" auth="Container" 
+name="jdbc/mysql" password="as1008" type="javax.sql.DataSource" 
+url="jdbc:mysql://localhost:3306/customer" username="root"/>
+ <min-pool-size>5</min-pool-size> 
+<idle-timeout-minutes>5</idle-timeout-minutes>
+</Context>
+<!--    <database jndi-name="jdbc/db2">
+    <driver type="javax.sql.DataSource">
+      <url>jdbc:db2://localhost:50000/db2:retrieveMessagesFromServerOnGetMessage=true;</url>
+      <user>db2admin</user>
+      <password>db2admin</password>
+    </driver>
+  </database>
+-->
