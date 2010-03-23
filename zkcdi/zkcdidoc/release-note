@@ -1,0 +1,10 @@
+ZK CDI is an CDI extenstion based on portable extension mechanism defined in Contextx and Dependancy Injection, JSR-299 of Java EE platform 6. Java EE application developers can now leverage both ZK and CDI powerful set of features for developing enterprise applciations. ZK CDI extension allows seamless use of CDI features within ZK programming model. In addtion to built-in CDI features ZK CDI extension provides following features 
+- Custom variable resolver/EL resolver
+A custom variable resolver that resolves CDI managed beans within <zscript />, an EL expression (${...}) and ZK annotated data binding expression (@{…}) by their EL name. 
+- ZK custom scopes 
+In addtion to built-in CDI scopes such as Session, Request, Application and Conversation this extension provides five addtional ZK scopes; Desktop, Page, execustion, IsSpace and Component 
+- ZK components as managed beans
+This feature allows developers to inject ZK compoennts into managed bean such as ZK composer
+- UI event handlers using ZK custom annotation and CDI provided event notification model 
+This feature allows developers to annotate any method with ZK custom annotation and turn it into an event handler method.
+- Currently supported on Tomcat 6, Jetty 6.1, Glassfish V3, JBoss AS 6.0.0.M1

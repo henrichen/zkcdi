@@ -1,0 +1,8 @@
+<?page title="HelloWorld" contentType="text/html;charset=UTF-8"?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver"?>
+<zk>
+<window id="helloWindow" title="HelloWorld" border="normal" width="250px" apply="${helloWorld} ">
+<textbox id="guestName" width="150px" />
+<button id="sayHelloBtn" label="Say hello"/>
+</window>
+</zk>
