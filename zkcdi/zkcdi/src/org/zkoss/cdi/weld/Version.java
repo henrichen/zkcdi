@@ -18,5 +18,5 @@ package org.zkoss.cdi.weld;
  */
 public class Version {
 	/** Returns the version UID */
-	public static final String UID = "1.0_1RC";
+	public static final String UID = "1.0RC";
 }
