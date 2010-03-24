@@ -1,0 +1,8 @@
+org.zkoss.cdi.annotation.impl
+org.zkoss.cdi.context
+org.zkoss.cdi.event
+org.zkoss.cdi.inject
+org.zkoss.cdi.util
+org.zkoss.cdi.weld
+org.zkoss.cdi.weld.context
+org.zkoss.cdi.weld.spi
