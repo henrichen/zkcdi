@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Specification-Title: ZK CDI Demo
-Specification-Version: 1.0_1
+Specification-Version: 1.0RC
 Specification-Vendor: Potix Corporation
 Implementation-Title: org.zkoss.zkcdi
 Implementation-URL: http://www.zkoss.org/
-Implementation-Version: 1.0_1
+Implementation-Version: 1.0RC
 Implementation-Vendor: Potix Corporation
